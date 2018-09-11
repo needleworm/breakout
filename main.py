@@ -22,7 +22,7 @@ GAME = "Breakout-v0"
 env = gym.make(GAME)
 
 learning_rate = 0.001
-batch_size = 200
+batch_size = 20
 num_episodes = 15000
 NETWORK = G.DQN
 
@@ -72,14 +72,14 @@ def train():
         current_screenshot = previous_screenshot
         state = torch.from_numpy(current_screenshot - previous_screenshot).to(DEVICE)
         for t in count():
-            env.render()
+            #env.render()
             action = utils.select_action(state, steps_done, policy_net)
             observation, reward, done, _ = env.step(action.item())
             previous_screenshot = current_screenshot
             current_screenshot = utils.dimension_manipulation(observation[xtrim[0]:xtrim[1], ytrim[0]:ytrim[1]])
 
             if not done:
-                next_status = torch.from_numpy(current_screenshot - previous_screenshot)
+                next_status = torch.from_numpy(current_screenshot - previous_screenshot).to(DEVICE)
                 REWARD += 1
             else:
                 next_status = None
