@@ -56,7 +56,7 @@ def train():
 
     # Memory
     memory = utils.ReplayMemory(10000)
-
+pytoh
     # ETCs
     steps_done = 0
     episode_durations = []
@@ -70,7 +70,7 @@ def train():
         REWARD = 0
         previous_screenshot = utils.dimension_manipulation(env.reset()[xtrim[0]:xtrim[1], ytrim[0]:ytrim[1]])
         current_screenshot = previous_screenshot
-        state = torch.from_numpy(current_screenshot - previous_screenshot).to(DEVICE)
+        state = torch.from_numpy(current_screenshot - previous_screenshot).double().to(DEVICE)
         for t in count():
             #env.render()
             action = utils.select_action(state, steps_done, policy_net)
@@ -79,7 +79,7 @@ def train():
             current_screenshot = utils.dimension_manipulation(observation[xtrim[0]:xtrim[1], ytrim[0]:ytrim[1]])
 
             if not done:
-                next_status = torch.from_numpy(current_screenshot - previous_screenshot).to(DEVICE)
+                next_status = torch.from_numpy(current_screenshot - previous_screenshot).double().to(DEVICE)
                 REWARD += 1
             else:
                 next_status = None
