@@ -70,7 +70,7 @@ def train():
         REWARD = 0
         previous_screenshot = utils.dimension_manipulation(env.reset()[xtrim[0]:xtrim[1], ytrim[0]:ytrim[1]])
         current_screenshot = previous_screenshot
-        state = torch.from_numpy(current_screenshot - previous_screenshot)
+        state = torch.from_numpy(current_screenshot - previous_screenshot).to(DEVICE)
         for t in count():
             env.render()
             action = utils.select_action(state, steps_done, policy_net)
@@ -87,7 +87,7 @@ def train():
             memory.push(state,
                         action,
                         next_status,
-                        torch.tensor(reward)[None])
+                        torch.tensor(reward).to(DEVICE)[None])
             state = next_status
 
             utils.optimize_model(policy_net, target_net, memory, batch_size)
