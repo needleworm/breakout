@@ -4,7 +4,7 @@
     2018.09.11.
 """
 
-import torch as tc
+import torch
 import torchvision
 import torch.nn as nn
 import numpy as np
@@ -27,27 +27,29 @@ num_episodes = 15000
 NETWORK = G.DQN
 
 xtrim = (33, 193)
-ytrim = (8, -8)
+ytrim = (8, 172)
 
-GAMMA = 0.99
-EPS_init = 0.9
-EPS_final = 0.05
-EPS_decay = 200
 TARGET_UPDATE = 10
 
 
 def train():
     # Graph Part
     print("Graph initialization...")
-    policy_net = NETWORK(env.obsercation_space.shape,
-                        env.action_space.size,
-                        learning_rate,
-                        batch_size).to(DEVICE)
+    xdim = xtrim[1] - xtrim[0]
+    ydim = ytrim[1] - ytrim[0]
+    channel=3
+    num_action = env.action_space.n
+    policy_net = NETWORK(ydim=ydim, xdim=xdim, channel=channel,
+                        num_action=num_action,
+                        learning_rate=learning_rate,
+                        batch_size=batch_size)
 
-    target_net = NETWORK(env.obsercation_space.shape,
-                        env.action_space.size,
-                        learning_rate,
-                        batch_size).to(DEVICE)
+    target_net = NETWORK(ydim=ydim, xdim=xdim, channel=channel,
+                        num_action=num_action,
+                        learning_rate=learning_rate,
+                        batch_size=batch_size)
+    policy_net.to(DEVICE)
+    target_net.to(DEVICE)
 
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
@@ -59,30 +61,42 @@ def train():
     steps_done = 0
     episode_durations = []
 
-    for episode in range(len(num_episodes)):
-        previous_screenshot = env.reset()[xtrim[0]:xtrim[1], ytrim[0]:ytrin[1]]
+    policy_net.double()
+    target_net.double()
+
+    print("Training Start.....")
+    for episode in range(num_episodes):
+        print("Episode " + str(episode))
+        REWARD = 0
+        previous_screenshot = utils.dimension_manipulation(env.reset()[xtrim[0]:xtrim[1], ytrim[0]:ytrim[1]])
         current_screenshot = previous_screenshot
-        state = current_screenshot - previous_screenshot
+        state = torch.from_numpy(current_screenshot - previous_screenshot)
         for t in count():
+            env.render()
             action = utils.select_action(state, steps_done, policy_net)
             observation, reward, done, _ = env.step(action.item())
             previous_screenshot = current_screenshot
-            current_screenshot = observation[xtrim[0]:xtrim[1], ytrim[0]:ytrim[1]]
+            current_screenshot = utils.dimension_manipulation(observation[xtrim[0]:xtrim[1], ytrim[0]:ytrim[1]])
 
             if not done:
-                next_status = current_screenshot - previous_screenshot
+                next_status = torch.from_numpy(current_screenshot - previous_screenshot)
+                REWARD += 1
             else:
                 next_status = None
 
-            memory.push(state, action, next_status, reward)
+            memory.push(state,
+                        action,
+                        next_status,
+                        torch.tensor(reward)[None])
             state = next_status
 
-            utils.optimize_model(policy_net, target_net)
+            utils.optimize_model(policy_net, target_net, memory, batch_size)
             if done:
-            episode_durations.append(t + 1)
-            plot_durations()
-            break
-        if i_episode % TARGET_UPDATE == 0:
-        target_net.load_state_dict(policy_net.state_dict())
+                episode_durations.append(t + 1)
+                utils.plot_durations(episode_durations)
+                print("REARD : " + str(REWARD))
+                break
+        if episode % TARGET_UPDATE == 0:
+            target_net.load_state_dict(policy_net.state_dict())
 
 train()
