@@ -91,7 +91,7 @@ def optimize_model(policy_net, target_net, memory, BATCH_SIZE):
     for s in batch.next_state:
         if s is not None:
             non_final_next_states.append(s)
-    non_final_next_states = torch.cat(non_final_next_states)
+    non_final_next_states = torch.cat(non_final_next_states).double()
 
 #    torch.cat([s for s in batch.next_state if s is not None])
     state_batch = torch.cat(batch.state)
