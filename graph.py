@@ -53,7 +53,6 @@ class DQN(nn.Module):
         self.loss = F.smooth_l1_loss(state_action_value, expected_state_action_values)
         self.optimizer.zero_grad()
         self.loss.backward()
-        print("loss : "+ str(self.loss.item()))
         for param in self.parameters():
             param.grad.data.clamp_(-1, 1)
-        optimizer.step()
+        self.optimizer.step()

@@ -56,21 +56,21 @@ def train():
 
     # Memory
     memory = utils.ReplayMemory(10000)
-pytoh
+
     # ETCs
     steps_done = 0
     episode_durations = []
 
-    policy_net.double()
-    target_net.double()
+    policy_net.float()
+    target_net.float()
 
     print("Training Start.....")
     for episode in range(num_episodes):
-        print("Episode " + str(episode))
+        print("\n########  Episode " + str(episode))
         REWARD = 0
         previous_screenshot = utils.dimension_manipulation(env.reset()[xtrim[0]:xtrim[1], ytrim[0]:ytrim[1]])
         current_screenshot = previous_screenshot
-        state = torch.from_numpy(current_screenshot - previous_screenshot).double().to(DEVICE)
+        state = torch.from_numpy(current_screenshot - previous_screenshot).float().to(DEVICE)
         for t in count():
             #env.render()
             action = utils.select_action(state, steps_done, policy_net)
@@ -79,7 +79,7 @@ pytoh
             current_screenshot = utils.dimension_manipulation(observation[xtrim[0]:xtrim[1], ytrim[0]:ytrim[1]])
 
             if not done:
-                next_status = torch.from_numpy(current_screenshot - previous_screenshot).double().to(DEVICE)
+                next_status = torch.from_numpy(current_screenshot - previous_screenshot).float().to(DEVICE)
                 REWARD += 1
             else:
                 next_status = None
@@ -95,6 +95,7 @@ pytoh
                 episode_durations.append(t + 1)
                 utils.plot_durations(episode_durations)
                 print("REARD : " + str(REWARD))
+                print("loss : " + str(policy_net.loss.item()))
                 break
         if episode % TARGET_UPDATE == 0:
             target_net.load_state_dict(policy_net.state_dict())
