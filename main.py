@@ -22,8 +22,8 @@ GAME = "Breakout-v0"
 env = gym.make(GAME)
 
 learning_rate = 0.001
-batch_size = 20
-num_episodes = 15000
+batch_size = 100
+num_episodes = 150000
 NETWORK = G.DQN
 
 xtrim = (33, 193)
@@ -66,7 +66,6 @@ def train():
 
     print("Training Start.....")
     for episode in range(num_episodes):
-        print("\n########  Episode " + str(episode))
         REWARD = 0
         previous_screenshot = utils.dimension_manipulation(env.reset()[xtrim[0]:xtrim[1], ytrim[0]:ytrim[1]])
         current_screenshot = previous_screenshot
@@ -80,22 +79,26 @@ def train():
 
             if not done:
                 next_status = torch.from_numpy(current_screenshot - previous_screenshot).float().to(DEVICE)
-                REWARD += 1
+                REWARD += reward
             else:
                 next_status = None
-
-            memory.push(state,
-                        action,
-                        next_status,
-                        torch.tensor(reward).to(DEVICE)[None])
+            if True :
+                memory.push(state,
+                            action,
+                            next_status,
+                            torch.tensor(float(t+1)).to(DEVICE)[None])
             state = next_status
-
             utils.optimize_model(policy_net, target_net, memory, batch_size)
+
             if done:
+                utils.optimize_model(policy_net, target_net, memory, batch_size)
                 episode_durations.append(t + 1)
                 utils.plot_durations(episode_durations)
-                print("REARD : " + str(REWARD))
-                print("loss : " + str(policy_net.loss.item()))
+                if REWARD != 0:
+                    print("\n########  Episode " + str(episode))
+                    print("Duration : " + str(t + 1))
+                    print("REWARD : " + str(REWARD))
+                    print("loss : " + str(policy_net.loss.item()))
                 break
         if episode % TARGET_UPDATE == 0:
             target_net.load_state_dict(policy_net.state_dict())

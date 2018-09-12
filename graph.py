@@ -11,6 +11,7 @@ class DQN(nn.Module):
         self.xdim = xdim
         self.channels = channel
         self.layers(num_action)
+        self.loss = 0
 
         self.optimizer = optim.Adam(self.parameters())
 
@@ -22,32 +23,45 @@ class DQN(nn.Module):
         out = out.reshape(out.size(0), -1)
         out = self.fc1(out)
         out = self.fc2(out)
+        out = self.fc3(out)
+        out = self.fc4(out)
         return out
 
     def layers(self, act_size):
         super(DQN, self).__init__()
         self.conv1 = nn.Sequential(
-            nn.Conv2d(self.channels, 64, kernel_size=3, stride=1),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(self.channels, 32, kernel_size=3, stride=1),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
         self.conv2 = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=3, stride=1),
-            nn.BatchNorm2d(128),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
         self.conv3 = nn.Sequential(
-            nn.Conv2d(128, 256, kernel_size=3, stride=1),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
         self.conv4 = nn.Sequential(
-            nn.Conv2d(256, 512, kernel_size=3, stride=1),
+            nn.Conv2d(64, 512, kernel_size=3, stride=1),
             nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
-        self.fc1 = nn.Linear(28672, 128)
-        self.fc2 = nn.Linear(128, act_size)
+        self.fc1 = nn.Sequential(
+            nn.Linear(28672, 1024),
+            nn.ReLU()
+        )
+        self.fc2 = nn.Sequential(
+            nn.Linear(1024, 512),
+            nn.ReLU()
+        )
+        self.fc3 = nn.Sequential(
+            nn.Linear(512, 128),
+            nn.ReLU()
+        )
+        self.fc4 = nn.Linear(128, act_size)
 
     def optimize(self, state_action_value, expected_state_action_values):
         self.loss = F.smooth_l1_loss(state_action_value, expected_state_action_values)
